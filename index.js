@@ -4,9 +4,16 @@ const User = require("./models/user");
 const path = require("path");
 const mongoose = require("mongoose");
 const bcrypt = require("bcrypt");
+const session = require("express-session");
 
+// 변수 선언문
 const app = express();
 const PORT = 3000;
+const sessionConfig = {
+  secret: "h!4+n-2gnjm$vlg-zcwz9w+vn*i+-q4soq3()@*qbt0^rdq(14",
+  resave: false,
+  saveUninitialized: false,
+};
 
 // MongoDB 연결 작업
 mongoose
@@ -20,14 +27,17 @@ app.set("views", path.join(__dirname, "views"));
 
 //middleware
 app.use(express.urlencoded({ extended: true }));
+app.use(session(sessionConfig));
 
 // router
 app.get("/", (req, res) => {
-  res.send("This is the Home Screen");
+  res.send("반갑습니다!");
 });
+
 app.get("/register", (req, res) => {
   res.render("register");
 });
+
 app.post("/register", async (req, res) => {
   const {
     body: { username, password },
@@ -40,12 +50,17 @@ app.post("/register", async (req, res) => {
   const user = new User({ username, password: hash });
 
   await user.save();
-  console.log(user);
+
+  // Sessoin Create user_id
+  req.session.user_id = user._id;
+
   res.redirect("/");
 });
+
 app.get("/login", (req, res) => {
   res.render("login");
 });
+
 app.post("/login", async (req, res) => {
   const {
     body: { username, password },
@@ -58,13 +73,21 @@ app.post("/login", async (req, res) => {
   const validPassword = await bcrypt.compare(password, user.password);
 
   if (validPassword) {
-    res.send(`Hello ${user.username}`);
+    // Sessoin Create user_id
+    req.session.user_id = user._id;
+
+    res.redirect("/secret");
   } else {
-    res.send(`Check Your Username or Password!`);
+    res.redirect(`/login`);
   }
 });
+
 app.get("/secret", (req, res) => {
-  res.send(`This is Secret! You Cannot See Me`);
+  if (!req.session.user_id) {
+    res.redirect("/login");
+  } else {
+    res.send(`반갑습니다~ 여기는 시크릿 페이지 입니다!`);
+  }
 });
 
 app.listen(PORT, () => console.log(`Server Listen to Port ${PORT}`));
