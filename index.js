@@ -82,11 +82,30 @@ app.post("/login", async (req, res) => {
   }
 });
 
+app.post("/logout", (req, res) => {
+  //1. 세션을 user._id 재할당 할 경우.
+  /*
+  if (req.session.user_id) {
+    req.session.user_id = null;
+    res.redirect("/login");
+  } else {
+    res.redirect("/login");
+  }*/
+
+  // 2, 세션을 지우는 방법.
+  if (req.session.user_id) {
+    req.session.destroy();
+    res.redirect("/login");
+  } else {
+    res.redirect("/login");
+  }
+});
+
 app.get("/secret", (req, res) => {
   if (!req.session.user_id) {
     res.redirect("/login");
   } else {
-    res.send(`반갑습니다~ 여기는 시크릿 페이지 입니다!`);
+    res.render("secret");
   }
 });
 
