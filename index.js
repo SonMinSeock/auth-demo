@@ -25,7 +25,15 @@ mongoose
 app.set("view engine", "ejs");
 app.set("views", path.join(__dirname, "views"));
 
-//middleware
+// define middleware
+const requireLogin = (req, res, next) => {
+  if (!req.session.user_id) {
+    return res.redirect("/login");
+  }
+  next();
+};
+
+//use middleware
 app.use(express.urlencoded({ extended: true }));
 app.use(session(sessionConfig));
 
@@ -101,12 +109,12 @@ app.post("/logout", (req, res) => {
   }
 });
 
-app.get("/secret", (req, res) => {
-  if (!req.session.user_id) {
-    res.redirect("/login");
-  } else {
-    res.render("secret");
-  }
+app.get("/secret", requireLogin, (req, res) => {
+  res.render("secret");
+});
+
+app.get("/topsecret", requireLogin, (req, res) => {
+  res.send("Top Secret!!");
 });
 
 app.listen(PORT, () => console.log(`Server Listen to Port ${PORT}`));
